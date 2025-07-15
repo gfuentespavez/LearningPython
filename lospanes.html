@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panificador Pro v2.0</title>
+  <!-- Bootstrap CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="container py-4">
+    <h1 class="mb-4">🍞 Panificador Pro v2.0 🍺</h1>
+
+    <form id="panForm">
+      <div class="mb-3">
+        <label for="tipoPan" class="form-label">Selecciona tipo de pan</label>
+        <select class="form-select" id="tipoPan" required>
+          <option value="" selected disabled>-- Elige --</option>
+          <option value="1">Pan normal</option>
+          <option value="2">Pan con cerveza</option>
+          <option value="3">Pan tipo ciabatta</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="pesoPan" class="form-label">Peso deseado (g)</label>
+        <input type="number" class="form-control" id="pesoPan" min="1" required />
+      </div>
+
+      <div id="extraOptions"></div>
+
+      <button type="submit" class="btn btn-primary mt-3">Calcular receta</button>
+    </form>
+
+    <div id="resultado" class="mt-4"></div>
+  </div>
+
+  <!-- Bootstrap JS Bundle CDN (includes Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    function calcular_ingredientes(base_peso, proporcion) {
+      return Math.round(base_peso * proporcion * 10) / 10;
+    }
+
+    function receta_pan_normal(peso_pan, tipo) {
+      const proporciones = {
+        agua: 330 / 900,
+        aceite: 36 / 900,
+        sal: 10 / 900,
+        azúcar: tipo === 'aireado' ? 24 / 900 : 12 / 900,
+        harina: 560 / 900,
+        levadura: tipo === 'aireado' ? 4 / 900 : 2.5 / 900
+      };
+      let texto = `<h5>🧾 Receta de Pan Normal (${tipo}) para ${peso_pan}g:</h5><ul>`;
+      for (const k in proporciones) {
+        texto += `<li>${k.charAt(0).toUpperCase() + k.slice(1)}: ${calcular_ingredientes(peso_pan, proporciones[k])} g</li>`;
+      }
+      texto += "</ul>";
+      texto += `<p>📟 Programa sugerido: Pan blanco/francés | Tiempo: 3h50 | Corteza: media</p>`;
+      return texto;
+    }
+
+    function receta_pan_cerveza(peso_pan, alcohol) {
+      const proporciones = {
+        cerveza: 330 / 900,
+        aceite: 36 / 900,
+        sal: 10 / 900,
+        azúcar: alcohol === 'sin' ? 12 / 900 : 0,
+        harina: 560 / 900,
+        levadura: 4 / 900
+      };
+      let texto = `<h5>🧾 Receta de Pan con Cerveza (${alcohol === 'sin' ? 'sin alcohol' : 'con alcohol'}) para ${peso_pan}g:</h5><ul>`;
+      for (const k in proporciones) {
+        if (proporciones[k] > 0) {
+          texto += `<li>${k.charAt(0).toUpperCase() + k.slice(1)}: ${calcular_ingredientes(peso_pan, proporciones[k])} g</li>`;
+        }
+      }
+      texto += "</ul>";
+      texto += `<p>📟 Programa sugerido: Pan blanco/francés | Tiempo: 3h50 | Corteza: media u oscura</p>`;
+      return texto;
+    }
+
+    function receta_ciabatta(peso_pan, metodo) {
+      const proporciones = {
+        harina: 500 / 900,
+        agua: 375 / 900,
+        sal: 10 / 900,
+        levadura: 3 / 900,
+        aceite: 20 / 900,
+        azúcar: 5 / 900
+      };
+      let texto = `<h5>🧾 Receta de Ciabatta (${metodo}) para ${peso_pan}g:</h5><ul>`;
+      for (const k in proporciones) {
+        texto += `<li>${k.charAt(0).toUpperCase() + k.slice(1)}: ${calcular_ingredientes(peso_pan, proporciones[k])} g</li>`;
+      }
+      texto += "</ul>";
+
+      if (metodo === "panificadora") {
+        texto += `<p>📟 Programa sugerido: Pan blanco o francés | Tiempo: 3h50 | Corteza: media</p>`;
+        texto += `<p>⚠️ Masa muy pegajosa. No agregar harina extra. Dejar que la máquina trabaje.</p>`;
+      } else {
+        texto += `<p>🔧 Procedimiento artesanal:</p><ol>
+          <li>Usa la panificadora solo en modo AMASADO (1er ciclo).</li>
+          <li>Saca la masa, deja fermentar 1–2h en bowl aceitado.</li>
+          <li>Dobla la masa sobre sí misma con espátula aceitada.</li>
+          <li>Deja reposar 30 min más. No formes con fuerza.</li>
+          <li>Hornea en horno muy caliente (230 °C) con vapor 20–25 min sobre piedra o bandeja pre-calentada.</li>
+        </ol>
+        <p>🔥 Resultado: corteza crujiente, miga alveolada, puro pan rústico.</p>`;
+      }
+      return texto;
+    }
+
+    // Show extra options based on pan type
+    document.getElementById('tipoPan').addEventListener('change', function () {
+      const val = this.value;
+      const extra = document.getElementById('extraOptions');
+      extra.innerHTML = '';
+      if (val === '1') {
+        extra.innerHTML = `
+          <div class="mb-3">
+            <label for="tipoPanNormal" class="form-label">¿Prefieres un pan más aireado o con más sabor?</label>
+            <select class="form-select" id="tipoPanNormal" required>
+              <option value="aireado">Más aireado</option>
+              <option value="sabor">Más sabor</option>
+            </select>
+          </div>`;
+      } else if (val === '2') {
+        extra.innerHTML = `
+          <div class="mb-3">
+            <label for="tipoCerveza" class="form-label">¿Usarás cerveza con o sin alcohol?</label>
+            <select class="form-select" id="tipoCerveza" required>
+              <option value="con">Con alcohol</option>
+              <option value="sin">Sin alcohol</option>
+            </select>
+          </div>`;
+      } else if (val === '3') {
+        extra.innerHTML = `
+          <div class="mb-3">
+            <label for="metodoCiabatta" class="form-label">¿Quieres hacerla completa en panificadora o usar horno?</label>
+            <select class="form-select" id="metodoCiabatta" required>
+              <option value="panificadora">Completa en panificadora</option>
+              <option value="artesanal">Solo amasado, horneado artesanal</option>
+            </select>
+          </div>`;
+      }
+    });
+
+    // Handle form submission
+    document.getElementById('panForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const tipoPan = document.getElementById('tipoPan').value;
+      const pesoPan = parseInt(document.getElementById('pesoPan').value);
+      const resultado = document.getElementById('resultado');
+
+      if (!tipoPan) {
+        resultado.innerHTML = `<div class="alert alert-danger">❌ Debes seleccionar un tipo de pan.</div>`;
+        return;
+      }
+      if (!pesoPan || pesoPan <= 0) {
+        resultado.innerHTML = `<div class="alert alert-danger">❌ Debes ingresar un peso válido.</div>`;
+        return;
+      }
+
+      let texto = '';
+      if (tipoPan === '1') {
+        const tipo = document.getElementById('tipoPanNormal')?.value || 'aireado';
+        texto = receta_pan_normal(pesoPan, tipo);
+      } else if (tipoPan === '2') {
+        const alcohol = document.getElementById('tipoCerveza')?.value || 'con';
+        texto = receta_pan_cerveza(pesoPan, alcohol);
+      } else if (tipoPan === '3') {
+        const metodo = document.getElementById('metodoCiabatta')?.value || 'panificadora';
+        texto = receta_ciabatta(pesoPan, metodo);
+      } else {
+        texto = `<div class="alert alert-danger">❌ Opción no válida.</div>`;
+      }
+      resultado.innerHTML = `<div class="alert alert-success" style="white-space: pre-wrap;">${texto}</div>`;
+    });
+  </script>
+</body>
+</html>
